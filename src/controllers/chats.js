@@ -8,7 +8,7 @@ module.exports = {
   createMessage: async (req, res) => {
     try {
       const receiver = req.params.id
-      const sender = req.user.jwtToken.id
+      const myAccount = req.user.jwtToken.id
       const { APP_KEY } = process.env
 
       const schema = joi.object({
@@ -19,20 +19,20 @@ module.exports = {
       if (error) {
         return response(res, `Schema: ${error}`, '', false)
       } else {
-        const checkReceiver = await User.findAll({
-          where: {
-            id: receiver
-          }
-        })
-        if (checkReceiver.length > 0) {
-          if (message === null) {
-            return response(res, 'Message can not to be null', '', false)
-          } else {
+        if (Number(receiver) === myAccount) {
+          return response(res, 'You can not sent message for your self, USE YOUR BRAIN', '', false)
+        } else {
+          const checkReceiver = await User.findAll({
+            where: {
+              id: receiver
+            }
+          })
+          if (checkReceiver.length > 0) {
             if (req.file === undefined) {
               const data = {
-                sender, receiver, message
+                sender: myAccount, receiver, message
               }
-              console.log(message)
+              //   console.log(message)
               const results = await Chat.create(data)
               if (results) {
                 return response(res, 'Message sent successfully', { results }, true)
@@ -42,7 +42,7 @@ module.exports = {
             } else {
               const image = `http://localhost:${APP_KEY}/uploads/message/${req.file.filename}`
               const data = {
-                sender, receiver, message, image
+                sender: myAccount, receiver, message, image
               }
               const results = await Chat.create(data)
               if (results) {
@@ -51,9 +51,9 @@ module.exports = {
                 return response(res, 'Fail to sent message', '', false)
               }
             }
+          } else {
+            return response(res, 'User not found', '', false)
           }
-        } else {
-          return response(res, 'User not found', '', false)
         }
       }
     } catch (err) {
@@ -61,26 +61,40 @@ module.exports = {
     }
   },
   getMessageFrom: async (req, res) => {
+    const myAccount = req.user.jwtToken.id
+    const myFriend = req.params.id
     try {
-      const receiver = req.params.id
-      const sender = req.user.jwtToken.id
-      const getAllChat = await Chat.findAll({
+      const checkList = await Chat.findAll({
         where: {
-          sender
+          [Op.or]: [
+            {
+              [Op.and]: [
+                {
+                  sender: myAccount
+                },
+                {
+                  receiver: myFriend
+                }
+              ]
+            },
+            {
+              [Op.and]: [
+                {
+                  sender: myFriend
+                },
+                {
+                  receiver: myAccount
+                }
+              ]
+            }
+          ]
         }
       })
-      if (getAllChat.length > 0) {
-        const getChat = await Chat.findAll({
-          where: {
-            receiver
-          }
-        })
-        if (getChat.length > 0) {
-          const results = getChat
-          return response(res, 'Your chat', { results }, true)
-        } else {
-          return response(res, `You dont have chat with ${receiver}`, '', false)
-        }
+      if (checkList.length > 0) {
+        const results = checkList
+        return response(res, `Your chat with ${myFriend}`, { results }, true)
+      } else {
+        return response(res, 'Dont have chat', '', false)
       }
     } catch (err) {
       return response(res, `Catch: ${err}`, '', false)
@@ -88,18 +102,22 @@ module.exports = {
   },
   getListMessage: async (req, res) => {
     try {
-      const sender = req.user.jwtToken.id
+      const myAccount = req.user.jwtToken.id
 
-      const checkList = await Chat.findAll({
+      const results = await Chat.findAll({
         where: {
-          sender
+          [Op.or]: [
+            {
+              sender: myAccount
+            },
+            {
+              receiver: myAccount
+            }
+          ]
         }
       })
-      if (checkList.length > 0) {
-        const list = await Chat.findAll({
-          attributes: ['receiver']
-        })
-        return response(res, 'List', { list }, true)
+      if (results.length > 0) {
+        return response(res, 'List', { results }, true)
       } else {
         return response(res, 'You dont have chat anyting', '', false)
       }
@@ -178,4 +196,41 @@ module.exports = {
       return response(res, `Catch: ${err}`, '', false)
     }
   }
+  //   getMessageFrom: async (req, res) => {
+  // const myAccount = req.user.jwtToken.id
+  // const myFriend = req.params.id
+
+//     const checkList = await Chat.findAll({
+//       where: {
+//         [Op.or]: [
+//           {
+//             [Op.and]: [
+//               {
+//                 sender: myAccount
+//               },
+//               {
+//                 receiver: myFriend
+//               }
+//             ]
+//           },
+//           {
+//             [Op.and]: [
+//               {
+//                 sender: myFriend
+//               },
+//               {
+//                 receiver: myAccount
+//               }
+//             ]
+//           }
+//         ]
+//       }
+//     })
+//     if (checkList.length > 0) {
+//       const results = checkList
+//       return response(res, `Your chat with ${myFriend}`, { results }, true)
+//     } else {
+//       return response(res, 'Dont have chat', '', false)
+//     }
+//   }
 }

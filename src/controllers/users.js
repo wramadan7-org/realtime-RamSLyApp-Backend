@@ -58,6 +58,11 @@ module.exports = {
       return response(res, `Catch: ${err}`, '', false)
     }
   },
+  getAllUser: async (req, res) => {
+    //  const { id } = req.user.jwtToken
+    const results = await User.findAll()
+    return response(res, 'All user', { results }, true)
+  },
   updateProfile: async (req, res) => {
     try {
       const { id } = req.user.jwtToken
