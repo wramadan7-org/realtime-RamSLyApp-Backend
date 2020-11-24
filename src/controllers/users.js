@@ -1,4 +1,4 @@
-const { User } = require('../models')
+const { User, Chat } = require('../models')
 const response = require('../helpers/responsStandard')
 const joi = require('joi')
 const { Op } = require('sequelize')
@@ -63,10 +63,24 @@ module.exports = {
     const results = await User.findAll()
     return response(res, 'All user', { results }, true)
   },
+  getProfileByParams: async (req, res) => {
+    try {
+      const { id } = req.params
+      const getParams = await User.findAll({ where: { id } })
+      if (getParams.length > 0) {
+        const results = getParams[0]
+        return response(res, 'Your friend', { results }, true)
+      } else {
+        return response(res, 'Id not found', '', false)
+      }
+    } catch (err) {
+      return response(res, `Catch: ${err}`, '', false)
+    }
+  },
   updateProfile: async (req, res) => {
     try {
       const { id } = req.user.jwtToken
-      const { APP_PORT } = process.env
+      // const { APP_PORT } = process.env
       const checkUser = await User.findAll({
         where: {
           id
@@ -76,10 +90,11 @@ module.exports = {
         const schema = joi.object({
           name: joi.string().required(),
           phone: joi.string().required(),
-          info: joi.string()
+          info: joi.string(),
+          profile: joi.string()
         })
         const { value, error } = schema.validate(req.body)
-        const { name, info, phone } = value
+        const { name, info, phone, profile } = value
         if (req.file === undefined) {
           if (error) {
             return response(res, `Schema: ${error}`, '', false)
@@ -99,7 +114,6 @@ module.exports = {
             if (checkSamePhone === true) {
               return response(res, 'Phone is already registerd', '', false)
             } else {
-              const profile = ''
               const data = {
                 name, info, phone, profile
               }
@@ -122,7 +136,7 @@ module.exports = {
             }
           }
         } else {
-          const profile = `http://localhost:${APP_PORT}/uploads/profile/${req.file.filename}`
+          const profile = `uploads/profile/${req.file.filename}`
           if (error) {
             return response(res, `Schema: ${error}`, '', false)
           } else {

@@ -1,5 +1,4 @@
-const { Chat } = require('../models')
-const { User } = require('../models')
+const { Chat, User } = require('../models')
 const { Op } = require('sequelize')
 const response = require('../helpers/responsStandard')
 const joi = require('joi')
@@ -88,7 +87,8 @@ module.exports = {
               ]
             }
           ]
-        }
+        },
+        include: [{ model: User, as: 'pengirim' }, { model: User, as: 'penerima' }]
       })
       if (checkList.length > 0) {
         const results = checkList
@@ -114,7 +114,9 @@ module.exports = {
               receiver: myAccount
             }
           ]
-        }
+        },
+        include: [{ model: User, as: 'pengirim' }, { model: User, as: 'penerima' }],
+        group: ['sender']
       })
       if (results.length > 0) {
         return response(res, 'List', { results }, true)
@@ -196,41 +198,43 @@ module.exports = {
       return response(res, `Catch: ${err}`, '', false)
     }
   }
-  //   getMessageFrom: async (req, res) => {
-  // const myAccount = req.user.jwtToken.id
-  // const myFriend = req.params.id
+  // getMessageFrom: async (req, res) => {
+  //   const myAccount = req.user.jwtToken.id
+  //   const myFriend = req.params.id
 
-//     const checkList = await Chat.findAll({
-//       where: {
-//         [Op.or]: [
-//           {
-//             [Op.and]: [
-//               {
-//                 sender: myAccount
-//               },
-//               {
-//                 receiver: myFriend
-//               }
-//             ]
-//           },
-//           {
-//             [Op.and]: [
-//               {
-//                 sender: myFriend
-//               },
-//               {
-//                 receiver: myAccount
-//               }
-//             ]
-//           }
-//         ]
-//       }
-//     })
-//     if (checkList.length > 0) {
-//       const results = checkList
-//       return response(res, `Your chat with ${myFriend}`, { results }, true)
-//     } else {
-//       return response(res, 'Dont have chat', '', false)
-//     }
-//   }
+  //   // const checkList = await Chat.findAll({
+  //   //   where: {
+  //   //     [Op.or]: [
+  //   //       {
+  //   //         [Op.and]: [
+  //   //           {
+  //   //             sender: myAccount
+  //   //           },
+  //   //           {
+  //   //             receiver: myFriend
+  //   //           }
+  //   //         ]
+  //   //       },
+  //   //       {
+  //   //         [Op.and]: [
+  //   //           {
+  //   //             sender: myFriend
+  //   //           },
+  //   //           {
+  //   //             receiver: myAccount
+  //   //           }
+  //   //         ]
+  //   //       }
+  //   //     ]
+  //   //   }
+  //   //   }]
+  //   // })
+  //   const checkList = await Chat.findAll({ include: [{ model: User, as: 'pengirim' }, { model: User, as: 'penerima' }] })
+  //   if (checkList.length > 0) {
+  //     const results = checkList
+  //     return response(res, `Your chat with ${myFriend}`, { results }, true)
+  //   } else {
+  //     return response(res, 'Dont have chat', '', false)
+  //   }
+  // }
 }
