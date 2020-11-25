@@ -28,15 +28,22 @@ module.exports = {
           })
           if (checkReceiver.length > 0) {
             if (req.file === undefined) {
-              const data = {
-                sender: myAccount, receiver, message
-              }
-              //   console.log(message)
-              const results = await Chat.create(data)
-              if (results) {
-                return response(res, 'Message sent successfully', { results }, true)
-              } else {
-                return response(res, 'Fail to sent message', '', false)
+              const checkIsNew = await Chat.update({ isNew: 0 }, {
+                where: {
+                  receiver: receiver
+                }
+              })
+              if (checkIsNew) {
+                const data = {
+                  sender: myAccount, receiver, message, isNew: 1
+                }
+                //   console.log(message)
+                const results = await Chat.create(data)
+                if (results) {
+                  return response(res, 'Message sent successfully', { results }, true)
+                } else {
+                  return response(res, 'Fail to sent message', '', false)
+                }
               }
             } else {
               const image = `http://localhost:${APP_KEY}/uploads/message/${req.file.filename}`
@@ -108,15 +115,28 @@ module.exports = {
         where: {
           [Op.or]: [
             {
-              sender: myAccount
+              [Op.and]: [
+                {
+                  sender: myAccount
+                },
+                {
+                  isNew: 1
+                }
+              ]
             },
             {
-              receiver: myAccount
+              [Op.and]: [
+                {
+                  receiver: myAccount
+                },
+                {
+                  isNew: 1
+                }
+              ]
             }
           ]
         },
-        include: [{ model: User, as: 'pengirim' }, { model: User, as: 'penerima' }],
-        group: ['sender']
+        include: [{ model: User, as: 'pengirim' }, { model: User, as: 'penerima' }]
       })
       if (results.length > 0) {
         return response(res, 'List', { results }, true)

@@ -19,7 +19,8 @@ module.exports = (sequelize, DataTypes) => {
     sender: DataTypes.INTEGER,
     receiver: DataTypes.INTEGER,
     message: DataTypes.TEXT,
-    image: DataTypes.STRING
+    image: DataTypes.STRING,
+    isNew: DataTypes.BOOLEAN
   }, {
     sequelize,
     modelName: 'Chat'
