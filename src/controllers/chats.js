@@ -30,7 +30,28 @@ module.exports = {
             if (req.file === undefined) {
               const checkIsNew = await Chat.update({ isNew: 0 }, {
                 where: {
-                  receiver: receiver
+                  [Op.or]: [
+                    {
+                      [Op.and]: [
+                        {
+                          receiver: receiver
+                        },
+                        {
+                          sender: myAccount
+                        }
+                      ]
+                    },
+                    {
+                      [Op.and]: [
+                        {
+                          receiver: myAccount
+                        },
+                        {
+                          sender: receiver
+                        }
+                      ]
+                    }
+                  ]
                 }
               })
               if (checkIsNew) {
@@ -136,7 +157,8 @@ module.exports = {
             }
           ]
         },
-        include: [{ model: User, as: 'pengirim' }, { model: User, as: 'penerima' }]
+        include: [{ model: User, as: 'pengirim' }, { model: User, as: 'penerima' }],
+        order: [['createdAt', 'DESC']]
       })
       if (results.length > 0) {
         return response(res, 'List', { results }, true)

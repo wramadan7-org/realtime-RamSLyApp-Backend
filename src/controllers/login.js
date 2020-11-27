@@ -2,7 +2,7 @@ const { User } = require('../models')
 const response = require('../helpers/responsStandard')
 const jwt = require('jsonwebtoken')
 const joi = require('joi')
-const { token } = require('morgan')
+// const { token } = require('morgan')
 
 module.exports = {
   login: async (req, res) => {

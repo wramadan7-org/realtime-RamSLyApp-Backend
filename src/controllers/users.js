@@ -60,7 +60,9 @@ module.exports = {
   },
   getAllUser: async (req, res) => {
     //  const { id } = req.user.jwtToken
-    const results = await User.findAll()
+    const results = await User.findAll({
+      order: [['name', 'ASC']]
+    })
     return response(res, 'All user', { results }, true)
   },
   getProfileByParams: async (req, res) => {
@@ -80,6 +82,7 @@ module.exports = {
   updateProfile: async (req, res) => {
     try {
       const { id } = req.user.jwtToken
+      console.log(req.file)
       // const { APP_PORT } = process.env
       const checkUser = await User.findAll({
         where: {
@@ -88,13 +91,13 @@ module.exports = {
       })
       if (checkUser.length > 0) {
         const schema = joi.object({
-          name: joi.string().required(),
-          phone: joi.string().required(),
+          name: joi.string(),
+          phone: joi.string(),
           info: joi.string(),
           profile: joi.string()
         })
         const { value, error } = schema.validate(req.body)
-        const { name, info, phone, profile } = value
+        const { name, info, phone } = value
         if (req.file === undefined) {
           if (error) {
             return response(res, `Schema: ${error}`, '', false)
@@ -115,7 +118,7 @@ module.exports = {
               return response(res, 'Phone is already registerd', '', false)
             } else {
               const data = {
-                name, info, phone, profile
+                name, info, phone
               }
               const updateMyProfile = await User.update(data, {
                 where: {
@@ -138,7 +141,7 @@ module.exports = {
         } else {
           const profile = `uploads/profile/${req.file.filename}`
           if (error) {
-            return response(res, `Schema: ${error}`, '', false)
+            return response(res, `Schema form: ${error}`, '', false)
           } else {
             const getPhoneFromDB = checkUser[0].phone
             const checkAnotherPhone = await User.findAll({
