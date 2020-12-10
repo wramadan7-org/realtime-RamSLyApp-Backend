@@ -2,6 +2,7 @@ const { Chat, User } = require('../models')
 const { Op } = require('sequelize')
 const response = require('../helpers/responsStandard')
 const joi = require('joi')
+const io = require('../App') // dapat dari export module di file APP
 
 module.exports = {
   createMessage: async (req, res) => {
@@ -61,6 +62,9 @@ module.exports = {
                 //   console.log(message)
                 const results = await Chat.create(data)
                 if (results) {
+                  console.log('recccccc', receiver)
+                  io.emit(receiver, { sender: myAccount, message })
+
                   return response(res, 'Message sent successfully', { results }, true)
                 } else {
                   return response(res, 'Fail to sent message', '', false)
@@ -240,43 +244,4 @@ module.exports = {
       return response(res, `Catch: ${err}`, '', false)
     }
   }
-  // getMessageFrom: async (req, res) => {
-  //   const myAccount = req.user.jwtToken.id
-  //   const myFriend = req.params.id
-
-  //   // const checkList = await Chat.findAll({
-  //   //   where: {
-  //   //     [Op.or]: [
-  //   //       {
-  //   //         [Op.and]: [
-  //   //           {
-  //   //             sender: myAccount
-  //   //           },
-  //   //           {
-  //   //             receiver: myFriend
-  //   //           }
-  //   //         ]
-  //   //       },
-  //   //       {
-  //   //         [Op.and]: [
-  //   //           {
-  //   //             sender: myFriend
-  //   //           },
-  //   //           {
-  //   //             receiver: myAccount
-  //   //           }
-  //   //         ]
-  //   //       }
-  //   //     ]
-  //   //   }
-  //   //   }]
-  //   // })
-  //   const checkList = await Chat.findAll({ include: [{ model: User, as: 'pengirim' }, { model: User, as: 'penerima' }] })
-  //   if (checkList.length > 0) {
-  //     const results = checkList
-  //     return response(res, `Your chat with ${myFriend}`, { results }, true)
-  //   } else {
-  //     return response(res, 'Dont have chat', '', false)
-  //   }
-  // }
 }

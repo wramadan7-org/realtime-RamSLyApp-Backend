@@ -7,6 +7,7 @@ const { APP_PORT } = process.env
 const app = express()
 const server = require('http').createServer(app)
 const io = require('socket.io')(server, {})
+module.exports = io
 
 app.use(bodyParser.urlencoded({ extended: false }))
 app.use(cors())
@@ -37,7 +38,7 @@ app.get('/', (req, res) => {
 })
 
 io.on('connection', socket => {
-  console.log(`App connect: ${socket}`)
+  console.log('A user connect')
 })
 
 server.listen(APP_PORT, () => {

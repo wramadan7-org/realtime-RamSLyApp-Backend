@@ -59,7 +59,21 @@ module.exports = {
     }
   },
   getAllUser: async (req, res) => {
-    //  const { id } = req.user.jwtToken
+    const { search } = req.query
+    if (search) {
+      const searchUser = await User.findAll({
+        where: {
+          name: { [Op.like]: `%${search}%` }
+        }
+      })
+      if (searchUser.length > 0) {
+        const results = searchUser
+        return response(res, `Your search user ${search}`, { results }, true)
+      } else {
+        const results = searchUser
+        return response(res, 'Not found', { results }, false)
+      }
+    }
     const results = await User.findAll({
       order: [['name', 'ASC']]
     })
@@ -182,6 +196,70 @@ module.exports = {
         }
       } else {
         return response(res, 'User not found', '', false)
+      }
+    } catch (err) {
+      return response(res, `Catch: ${err}`, '', false)
+    }
+  },
+  changePhoneNumber: async (req, res) => {
+    try {
+      const schema = joi.object({
+        oldPhone: joi.string().required(),
+        newPhone: joi.string().required()
+      })
+      const { value, error } = schema.validate(req.body)
+      const { oldPhone, newPhone } = value
+      if (error) {
+        return response(res, `Schema: ${error}`, '', false)
+      } else {
+        const checkOldPhone = req.user.jwtToken.phone
+        const { id } = req.user.jwtToken
+        const checkPhoneDB = await User.findAll({
+          where: {
+            [Op.and]: [
+              { id },
+              { phone: oldPhone }
+            ]
+          }
+        })
+        if (checkPhoneDB.length > 0) {
+          const checkAnotherPhone = await User.findAll({
+            where: {
+              phone: {
+                [Op.ne]: checkOldPhone
+              }
+            }
+          })
+          const mapPhone = checkAnotherPhone.map(o => {
+            return o.phone
+          })
+          const checkSamePhone = await mapPhone.some(item => item === newPhone)
+          if (checkSamePhone === true) {
+            return response(res, 'Phone is already registerd', '', false)
+          } else {
+            if (oldPhone === newPhone) {
+              return response(res, 'Please insert new phone number', '', false)
+            }
+            const data = {
+              phone: newPhone
+            }
+            const updatePhone = await User.update(data, {
+              where: { id }
+            })
+            if (updatePhone.length > 0) {
+              const getUpdatePhone = await User.findAll({
+                attributes: ['phone'],
+                where: { id }
+              })
+              const results = getUpdatePhone[0]
+              return response(res, 'Success change phone number', { results }, true)
+            } else {
+              return response(res, 'Fail to change phone number', '', false)
+            }
+          }
+        } else {
+          return response(res, 'Old phone invalid', '', false)
+        }
       }
     } catch (err) {
       return response(res, `Catch: ${err}`, '', false)
