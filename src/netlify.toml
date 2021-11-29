@@ -1,0 +1,7 @@
+[build]
+    publish = "index.js"
+
+[[redirects]]
+    from="/"
+    to="/index.js"
+    status=302
