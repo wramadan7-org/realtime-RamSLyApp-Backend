@@ -1,4 +1,4 @@
-const { User, Chat } = require('../models')
+const { User } = require('../models')
 const response = require('../helpers/responsStandard')
 const joi = require('joi')
 const { Op } = require('sequelize')
